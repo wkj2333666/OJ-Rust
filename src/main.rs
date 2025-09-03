@@ -1,3 +1,7 @@
+mod config;
+mod database;
+mod jobs;
+
 use actix_web::{App, HttpServer, Responder, get, middleware::Logger, post, web};
 
 #[get("/hello/{name}")]
