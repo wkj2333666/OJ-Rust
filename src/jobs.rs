@@ -1,4 +1,6 @@
-use actix_web::{Responder, get, post, web};
+use crate::database::{CONN_POOL, Problem};
+use actix_web::{HttpResponse, Responder, get, post, web};
+use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -17,10 +19,22 @@ struct Job {
 
 #[post("/jobs")]
 async fn create_job(job: web::Json<Job>) -> impl Responder {
-    let result = do_create_job(job.into_inner());
+    let result = do_create_job(job.into_inner()).await;
     match result {
-        Ok
+        Ok(job_response) => HttpResponse::Ok().json(job_response),
+        Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
     }
+}
+
+async fn do_create_job(job: Job) -> Result<JobResponse> {
+    let conn = CONN_POOL.get()?;
+    let problem: Problem = conn.query_one(
+        "SELECT * FROM problem WHERE id = ?1;",
+        [job.problem_id],
+        |row| Ok(Problem::from_row(&row)),
+    )??;
+    // let problem = conn.
+    Ok(())
 }
 
 #[derive(Serialize)]
