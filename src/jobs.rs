@@ -10,10 +10,15 @@ struct Job {
     problem_id: u32,
 }
 
-#[get("/jobs")]
-async fn get_jobs() -> HttpResponse {
-    HttpResponse::Ok().json(vec![])
-}
+// #[get("/jobs")]
+// async fn get_jobs() -> HttpResponse {
+//     HttpResponse::Ok().json(vec![])
+// }
 
 #[post("/jobs")]
-async fn create_job(job: web::Json<Job>) -> impl Responder {}
+async fn create_job(job: web::Json<Job>) -> impl Responder {
+    let result = do_create_job(job.into_inner());
+    match result {
+        Ok
+    }
+}
