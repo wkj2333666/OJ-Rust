@@ -1,4 +1,4 @@
-use crate::database::{CONN_POOL, CaseResult, Problem};
+use crate::database::{CONN_POOL, CaseResult, Problem, Submission};
 use actix_web::{HttpResponse, Responder, get, post, web};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -40,8 +40,35 @@ async fn do_create_job(job: Job) -> Result<JobResponse> {
         .to_string();
 
     // insert submission
+    let submission = Submission::new(
+        job.source_code.clone(),
+        job.language.clone(),
+        job.user_id,
+        job.contest_id,
+        job.problem_id,
+        problem.cases.len(),
+    );
+    let submission_id: usize = conn.execute(
+        "INSERT INTO submission (source_code, language, user_id, contest_id, problem_id, cases
+            VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            &submission.source_code,
+            &submission.language,
+            &submission.user_id,
+            &submission.contest_id,
+            &submission.problem_id,
+            &submission.cases.len(),
+        ),
+    )?;
+
+    // run background task
+
+    let updated_time: String = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
+
     Ok(JobResponse {
-        id: 0,
+        id: submission_id as u32,
         created_time,
         updated_time,
         submission: job,

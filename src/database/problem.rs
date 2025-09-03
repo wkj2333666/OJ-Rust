@@ -9,7 +9,7 @@ pub struct Problem {
     name: String,
     r#type: String,
     // misc: Option<serde_json::Value>,
-    cases: Vec<Case>,
+    pub cases: Vec<Case>,
 }
 
 #[derive(Deserialize, Serialize)]
