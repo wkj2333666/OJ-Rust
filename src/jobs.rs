@@ -1,4 +1,4 @@
-use crate::database::{CONN_POOL, Problem};
+use crate::database::{CONN_POOL, CaseResult, Problem};
 use actix_web::{HttpResponse, Responder, get, post, web};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -28,13 +28,28 @@ async fn create_job(job: web::Json<Job>) -> impl Responder {
 
 async fn do_create_job(job: Job) -> Result<JobResponse> {
     let conn = CONN_POOL.get()?;
+    // get problem
     let problem: Problem = conn.query_one(
         "SELECT * FROM problem WHERE id = ?1;",
         [job.problem_id],
         |row| Ok(Problem::from_row(&row)),
     )??;
-    // let problem = conn.
-    Ok(())
+
+    let created_time: String = chrono::Utc::now()
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string();
+
+    // insert submission
+    Ok(JobResponse {
+        id: 0,
+        created_time,
+        updated_time,
+        submission: job,
+        state: "pending".to_string(),
+        result: "pending".to_string(),
+        score: 0.0,
+        cases: Vec::new(),
+    })
 }
 
 #[derive(Serialize)]
@@ -47,15 +62,6 @@ struct JobResponse {
     result: String,
     score: f32,
     cases: Vec<CaseResult>,
-}
-
-#[derive(Serialize)]
-struct CaseResult {
-    id: u32,
-    result: String,
-    time: u32,
-    memory: u32,
-    info: String,
 }
 
 impl JobResponse {
@@ -81,18 +87,6 @@ impl JobResponse {
                 }
                 new_vec
             },
-        }
-    }
-}
-
-impl CaseResult {
-    fn new(id: u32) -> Self {
-        Self {
-            id,
-            result: String::from("Waiting"),
-            time: 0,
-            memory: 0,
-            info: String::from(""),
         }
     }
 }
