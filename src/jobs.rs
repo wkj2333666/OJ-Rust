@@ -62,21 +62,19 @@ async fn do_create_job(job: Job) -> Result<JobResponse> {
     )?;
 
     // run background task
+    web::block(run_job);
 
     let updated_time: String = chrono::Utc::now()
         .format("%Y-%m-%dT%H:%M:%S%.3fZ")
         .to_string();
 
-    Ok(JobResponse {
-        id: submission_id as u32,
+    Ok(JobResponse::new(
+        &job,
+        submission_id as u32,
         created_time,
         updated_time,
-        submission: job,
-        state: "pending".to_string(),
-        result: "pending".to_string(),
-        score: 0.0,
-        cases: Vec::new(),
-    })
+        problem.cases.len(),
+    ))
 }
 
 #[derive(Serialize)]
